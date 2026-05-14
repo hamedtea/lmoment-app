@@ -44,7 +44,7 @@
 
 - Online mode Moments page requires manual navigation — it does not auto-refresh.
 - Kappa fitting uses `scipy.optimize.minimize` with bounds (−0.99, 0.99) for both k and h — may not converge for extreme τ3/τ4 values.
-- Scheduler page (APScheduler) is a placeholder — no scheduled jobs are wired to the analysis pipeline yet.
+- Scheduler page removed — APScheduler background threads cannot safely write to `st.session_state`. Periodic recomputation is now handled by `st.fragment(run_every=N)` on the Moments page.
 - GOF Z-statistic is normalised by `std(τ4)` across columns — unreliable when number of columns is small (< 10).
 
 ---

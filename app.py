@@ -1,5 +1,4 @@
 import io
-import time
 import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
@@ -138,43 +137,6 @@ fig.update_layout(
 st.plotly_chart(fig, use_container_width=True)
 
 st.markdown("---")
-
-# ── Shared helpers ────────────────────────────────────────────────────────────
-@st.cache_data
-def _ref_curves():
-    t3_gev, t4_gev = gev_curve()
-    t3_glo, t4_glo = glo_curve()
-    t3_gpa, t4_gpa = gpa_curve()
-    t3_lb,  t4_lb  = lower_bound_curve()
-    return {
-        "GEV":         (t3_gev, t4_gev),
-        "GLO":         (t3_glo, t4_glo),
-        "GPA":         (t3_gpa, t4_gpa),
-        "Lower bound": (t3_lb,  t4_lb),
-    }
-
-
-def run_analysis(X, B=50):
-    om = ordinary_moments_columns(X)
-    l1, l2, l3, l4, tau3, tau4 = lmoments_columns(X)
-    t3_boot, t4_boot = bootstrap_tau(X, B=B)
-    t3_mean = float(np.nanmean(tau3))
-    t4_mean = float(np.nanmean(tau4))
-    k_fit, h_fit = fit_kappa(t3_mean, t4_mean)
-    t3_kappa, t4_kappa = tau3tau4_kappa(k_fit, h_fit)
-    t3_kappa_curve, t4_kappa_curve = kappa_curve(h_fit)
-    return {
-        "X": X,
-        "om": om,
-        "lm": {"l1": l1, "l2": l2, "l3": l3, "l4": l4, "tau3": tau3, "tau4": tau4},
-        "boot": {"t3": t3_boot, "t4": t4_boot},
-        "kappa": {"k": k_fit, "h": h_fit,
-                  "t3": t3_kappa, "t4": t4_kappa,
-                  "curve_t3": t3_kappa_curve, "curve_t4": t4_kappa_curve},
-        "means": {"t3": t3_mean, "t4": t4_mean},
-        "ref_curves": _ref_curves(),
-    }
-
 
 # ── OFFLINE MODE ──────────────────────────────────────────────────────────────
 if st.session_state["mode"] == "offline":
@@ -321,41 +283,18 @@ else:
                                       min_value=0.0, max_value=30.0,
                                       value=10.0, step=1.0)
 
-    with st.spinner("Generating and analysing LOS and NLOS streams…"):
-        K_lin  = 10 ** (rice_KdB_on / 10)
-        b_rice = np.sqrt(2 * K_lin)
-        X_los  = rice_dist.rvs(b=b_rice, scale=1.0, size=(1000, 64))
-        X_nlos = rayleigh_dist.rvs(scale=1.0, size=(1000, 64))
+    st.session_state["online_config"] = {
+        "refresh_interval": int(refresh_interval),
+        "rice_KdB":         float(rice_KdB_on),
+    }
 
-        los_data  = run_analysis(X_los,  B=50)
-        nlos_data = run_analysis(X_nlos, B=50)
-
-        st.session_state["los"]  = los_data
-        st.session_state["nlos"] = nlos_data
-
-        # Accumulate history (max 50 refreshes)
-        if "history" not in st.session_state:
-            st.session_state["history"] = []
-        st.session_state["history"].append({
-            "refresh": len(st.session_state["history"]) + 1,
-            "los_t3":  los_data["means"]["t3"],
-            "los_t4":  los_data["means"]["t4"],
-            "nlos_t3": nlos_data["means"]["t3"],
-            "nlos_t4": nlos_data["means"]["t4"],
-        })
-        if len(st.session_state["history"]) > 20:
-            st.session_state["history"] = st.session_state["history"][-20:]
-
-    c1, c2, c3, c4 = st.columns(4)
-    c1.metric("LOS Mean τ₃",  f"{los_data['means']['t3']:.4f}")
-    c2.metric("LOS Mean τ₄",  f"{los_data['means']['t4']:.4f}")
-    c3.metric("NLOS Mean τ₃", f"{nlos_data['means']['t3']:.4f}")
-    c4.metric("NLOS Mean τ₄", f"{nlos_data['means']['t4']:.4f}")
-
-
-    ph = st.empty()
-    for remaining in range(refresh_interval, 0, -1):
-        ph.info(f"Next refresh in {remaining}s…")
-        time.sleep(1)
-    ph.empty()
-    st.rerun()
+    if "los" in st.session_state and "nlos" in st.session_state:
+        los_data  = st.session_state["los"]
+        nlos_data = st.session_state["nlos"]
+        c1, c2, c3, c4 = st.columns(4)
+        c1.metric("LOS Mean τ₃",  f"{los_data['means']['t3']:.4f}")
+        c2.metric("LOS Mean τ₄",  f"{los_data['means']['t4']:.4f}")
+        c3.metric("NLOS Mean τ₃", f"{nlos_data['means']['t3']:.4f}")
+        c4.metric("NLOS Mean τ₄", f"{nlos_data['means']['t4']:.4f}")
+    else:
+        st.info("Navigate to the **Moments** page to start the live stream.")

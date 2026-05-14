@@ -56,7 +56,6 @@ lmoment-app/
 ├── pages/
 │   ├── 1_Moments.py              # Ordinary moments and L-moments visualisations
 │   ├── 3_Kappa_Fit.py            # Kappa fit results and GOF table
-│   ├── 4_Scheduler.py            # APScheduler job manager
 │   └── 5_Theoretical_LMoments.py # Static theoretical L-moment ratio diagram
 └── core/
     ├── lmoments.py               # L-moment estimators, bootstrap
@@ -78,7 +77,6 @@ lmoment-app/
 | pandas | ≥ 2.0.0 |
 | scipy | ≥ 1.12.0 |
 | plotly | ≥ 5.20.0 |
-| apscheduler | ≥ 3.10.0 |
 
 ---
 
