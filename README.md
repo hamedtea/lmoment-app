@@ -4,7 +4,7 @@ A Streamlit web application for computing ordinary moments and L-moments of a da
 
 ## Live App
 
-[https://hamedtea-lmoment-app-app-xxxx.streamlit.app](https://share.streamlit.io)
+[https://lmoment.streamlit.app](https://lmoment.streamlit.app)
 
 ---
 
